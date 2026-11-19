@@ -4,6 +4,7 @@
 **Unidade Curricular:** Desenvolvimento de Soluções Web com Inteligência Artificial Generativa  
 **Categoria INTEGRA SENAI:** Soluções Industriais  
 **Inspiração visual:** BEEGA BOT
+**Integrantes:** Ana Sofhia, Bárbara, Emily, Evelyn e Gabriela
 
 ---
 
