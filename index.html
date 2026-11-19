@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAM SENAI — Sistema de Gestão de Manutenção e Chamados Internos</title>
+    
+    <!-- Tipografia Corporativa: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Ícones: Material Symbols Outlined -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    
+    <!-- Favicon com a logo BEEGA BOT -->
+    <link rel="icon" type="image/png" href="assets/logo.png">
+
+    <!-- Folha de Estilos do EAM -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- ====================================================================
+         BARRA LATERAL DE NAVEGAÇÃO (SIDEBAR)
+         ==================================================================== -->
+    <aside class="sidebar" id="app-sidebar">
+        <div class="sidebar-header">
+            <div class="brand-icon-wrapper">
+                <img src="assets/logo.png" alt="Logo BEEGA BOT" class="brand-logo-img">
+            </div>
+            <div class="brand-text">
+                <h1>EAM SENAI</h1>
+                <span>Gestão Industrial</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Navegação Principal</div>
+            <button class="nav-item active" data-view="dashboard" onclick="App.navegarPara('dashboard')">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Visão Geral</span>
+            </button>
+            <button class="nav-item" data-view="abrir-chamado" onclick="App.navegarPara('abrir-chamado')">
+                <span class="material-symbols-outlined">add_circle</span>
+                <span>Abrir Chamado</span>
+            </button>
+            <button class="nav-item" data-view="todos-chamados" onclick="App.navegarPara('todos-chamados')">
+                <span class="material-symbols-outlined">table_view</span>
+                <span>Todos os Chamados</span>
+                <span class="nav-item-badge" id="nav-count-todos">0</span>
+            </button>
+
+            <div class="nav-section-title">Operações Setoriais</div>
+            <button class="nav-item" data-view="paineis-operacionais" onclick="App.navegarPara('paineis-operacionais')">
+                <span class="material-symbols-outlined">view_kanban</span>
+                <span>Painéis Setoriais</span>
+            </button>
+
+            <div class="nav-section-title">Controle & Métricas</div>
+            <button class="nav-item" data-view="indicadores" onclick="App.navegarPara('indicadores')">
+                <span class="material-symbols-outlined">analytics</span>
+                <span>Indicadores (TMA/TMR)</span>
+            </button>
+            <button class="nav-item" data-view="auditoria" onclick="App.navegarPara('auditoria')">
+                <span class="material-symbols-outlined">history_edu</span>
+                <span>Auditoria & LGPD</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="kiosk-btn" onclick="App.alternarModoTelao()" title="Alternar Modo Telão / Kiosk">
+                <span class="material-symbols-outlined">fullscreen</span>
+                <span>Modo Telão / Kiosk</span>
+            </button>
+            <button class="kiosk-btn" style="margin-top: 8px; font-size: 11px;" onclick="App.abrirModalReset()" title="Restaurar dados fictícios">
+                <span class="material-symbols-outlined">restart_alt</span>
+                <span>Restaurar Mock</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ====================================================================
+         CONTEÚDO PRINCIPAL (MAIN WRAPPER)
+         ==================================================================== -->
+    <div class="main-wrapper">
+        <!-- Top Header Sticky -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" onclick="App.toggleMenuMobile()" title="Menu">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="header-logo-badge" title="Beega Bot EAM">
+                    <img src="assets/logo.png" alt="Beega Bot" class="header-logo-img">
+                </div>
+                <div class="header-title-area">
+                    <h2 id="page-current-title">Visão Geral da Operação</h2>
+                    <p id="page-current-subtitle">Monitoramento em tempo real dos chamados industriais</p>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="system-status-pill">
+                    <span class="pulse-beacon"></span>
+                    <span>Atualização a cada 5s</span>
+                </div>
+                <div class="current-datetime" id="live-clock">--:--:--</div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="App.navegarPara('abrir-chamado')">
+                        <span class="material-symbols-outlined">add</span>
+                        <span>Novo Chamado</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Área Dinâmica de Conteúdo -->
+        <main class="content-area">
+
+            <!-- ============================================================
+                 TELA 1: VISÃO GERAL (DASHBOARD)
+                 ============================================================ -->
+            <section class="view-section active" id="view-dashboard">
+                <!-- Urgência Banner Dinâmico -->
+                <div id="dashboard-urgent-alert-area"></div>
+
+                <!-- Cards Principais de Indicadores -->
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-header">
+                            <span class="stat-title">Total de Chamados</span>
+                            <div class="stat-icon"><span class="material-symbols-outlined">assignment</span></div>
+                        </div>
+                        <div class="stat-value" id="kpi-total">0</div>
+                        <div class="stat-meta"><span class="material-symbols-outlined" style="font-size: 14px;">insights</span> Registrados na base</div>
+                    </div>
+
+                    <div class="stat-card abertos">
+                        <div class="stat-header">
+                            <span class="stat-title">Abertos / Em Triagem</span>
+                            <div class="stat-icon"><span class="material-symbols-outlined">inbox</span></div>
+                        </div>
+                        <div class="stat-value" id="kpi-abertos">0</div>
+                        <div class="stat-meta"><span class="material-symbols-outlined" style="font-size: 14px;">pending</span> Aguardando despacho</div>
+                    </div>
+
+                    <div class="stat-card atendimento">
+                        <div class="stat-header">
+                            <span class="stat-title">Em Atendimento</span>
+                            <div class="stat-icon"><span class="material-symbols-outlined">engineering</span></div>
+                        </div>
+                        <div class="stat-value" id="kpi-atendimento">0</div>
+                        <div class="stat-meta"><span class="material-symbols-outlined" style="font-size: 14px;">build</span> Equipes em campo</div>
+                    </div>
+
+                    <div class="stat-card concluidos">
+                        <div class="stat-header">
+                            <span class="stat-title">Concluídos</span>
+                            <div class="stat-icon"><span class="material-symbols-outlined">check_circle</span></div>
+                        </div>
+                        <div class="stat-value" id="kpi-concluidos">0</div>
+                        <div class="stat-meta"><span class="material-symbols-outlined" style="font-size: 14px;">verified</span> Serviços finalizados</div>
+                    </div>
+
+                    <div class="stat-card urgentes">
+                        <div class="stat-header">
+                            <span class="stat-title">Críticos / Risco</span>
+                            <div class="stat-icon"><span class="material-symbols-outlined">crisis_alert</span></div>
+                        </div>
+                        <div class="stat-value" id="kpi-urgentes">0</div>
+                        <div class="stat-meta"><span class="material-symbols-outlined" style="font-size: 14px;">timer_10</span> SLA prioritário</div>
+                    </div>
+                </div>
+
+                <!-- Grids Complementares: Distribuição por Setor & Recentes -->
+                <div class="dashboard-grid-2">
+                    <div class="card-box">
+                        <div class="card-header-flex">
+                            <h3>Chamados Recentes</h3>
+                            <button class="btn btn-outline btn-sm" onclick="App.navegarPara('todos-chamados')">Ver Todos</button>
+                        </div>
+                        <div id="dashboard-recent-tickets-list">
+                            <!-- Inserido dinamicamente via JS -->
+                        </div>
+                    </div>
+
+                    <div class="card-box">
+                        <div class="card-header-flex">
+                            <h3>Carga por Setor</h3>
+                            <span class="badge badge-aberto">Tempo Real</span>
+                        </div>
+                        <div class="sector-progress-list" id="dashboard-sector-bars">
+                            <!-- Inserido dinamicamente via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 TELA 2: ABERTURA DE NOVO CHAMADO
+                 ============================================================ -->
+            <section class="view-section" id="view-abrir-chamado">
+                <div class="form-container">
+                    <div class="form-header-card" style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                        <div>
+                            <h2>Registrar Novo Chamado Interno</h2>
+                            <p>Centralização de ordens de serviço para manutenção, zeladoria, vigilância e situações de risco.</p>
+                        </div>
+                        <div style="width: 52px; height: 52px; border-radius: var(--radius-md); background: var(--surface-low); border: 1px solid var(--surface-border); display: flex; align-items: center; justify-content: center; padding: 4px; flex-shrink: 0;">
+                            <img src="assets/logo.png" alt="Beega Mascot" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                    </div>
+
+                    <!-- Banner de Detecção de Duplicidade (Requisito 6) -->
+                    <div class="duplicate-alert-banner" id="duplicate-warning-banner">
+                        <span class="material-symbols-outlined duplicate-alert-icon">warning</span>
+                        <div class="duplicate-alert-text">
+                            <h4>Atenção: Possível chamado duplicado identificado!</h4>
+                            <p id="duplicate-warning-text">Identificamos ocorrências ativas no mesmo ambiente com termos similares.</p>
+                            <div class="duplicate-tickets-chips" id="duplicate-chips-container"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-body-card">
+                        <form id="ticket-registration-form" onsubmit="App.salvarNovoChamado(event)">
+                            <!-- Campo 1: Solicitante -->
+                            <div class="form-group">
+                                <label class="form-label" for="form-solicitante">
+                                    <span>Nome do Solicitante</span>
+                                    <span class="required-mark">*</span>
+                                </label>
+                                <input type="text" id="form-solicitante" class="form-control" placeholder="Informe seu nome ou cargo de turno" required maxlength="80">
+                            </div>
+
+                            <!-- Campo 2: Categoria & Direcionamento Automático -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <span>Categoria da Ocorrência</span>
+                                    <span class="required-mark">*</span>
+                                </label>
+                                <div class="category-selector-grid">
+                                    <label class="category-radio-card active" onclick="App.selecionarCategoria('Manutenção', this)">
+                                        <input type="radio" name="form-categoria" value="Manutenção" checked>
+                                        <span>Manutenção</span>
+                                    </label>
+                                    <label class="category-radio-card" onclick="App.selecionarCategoria('Zeladoria', this)">
+                                        <input type="radio" name="form-categoria" value="Zeladoria">
+                                        <span>Zeladoria</span>
+                                    </label>
+                                    <label class="category-radio-card" onclick="App.selecionarCategoria('Vigilância', this)">
+                                        <input type="radio" name="form-categoria" value="Vigilância">
+                                        <span>Vigilância</span>
+                                    </label>
+                                    <label class="category-radio-card" onclick="App.selecionarCategoria('Risco', this)">
+                                        <input type="radio" name="form-categoria" value="Risco">
+                                        <span style="color: var(--risk-highlight); font-weight: 700;">🚨 Risco</span>
+                                    </label>
+                                </div>
+                                <div class="auto-routing-badge" id="form-auto-route-badge">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">alt_route</span>
+                                    <span>Setor Inicial: <strong>Oficina</strong> (Direcionamento Automático)</span>
+                                </div>
+                            </div>
+
+                            <!-- Campo 3: Local ou Ambiente -->
+                            <div class="form-group">
+                                <label class="form-label" for="form-local">
+                                    <span>Local ou Ambiente Específico</span>
+                                    <span class="required-mark">*</span>
+                                </label>
+                                <input type="text" id="form-local" class="form-control" placeholder="Ex: Cozinha Industrial — Pia de Esterilização" required maxlength="120" oninput="App.verificarDuplicidadeAoDigitar()">
+                                <div class="quick-tags-container">
+                                    <span style="font-size: 11px; color: var(--text-light); margin-right: 4px; align-self: center;">Sugestões:</span>
+                                    <button type="button" class="quick-tag-btn" onclick="App.preencherLocal('Cozinha Industrial — Pia Central de Esterilização')">Cozinha / Pia Central</button>
+                                    <button type="button" class="quick-tag-btn" onclick="App.preencherLocal('Guarita Principal — Portão 02 de Carga')">Portão 2 Guarita</button>
+                                    <button type="button" class="quick-tag-btn" onclick="App.preencherLocal('Oficina Mecânica — Torno Mecânico CNC 01')">Oficina CNC</button>
+                                    <button type="button" class="quick-tag-btn" onclick="App.preencherLocal('Refeitório Industrial — Exaustor')">Refeitório Exaustor</button>
+                                </div>
+                            </div>
+
+                            <!-- Campo 4: Descrição do Problema -->
+                            <div class="form-group">
+                                <label class="form-label" for="form-descricao">
+                                    <span>Descrição Objetiva do Problema</span>
+                                    <span class="required-mark">*</span>
+                                </label>
+                                <textarea id="form-descricao" class="form-control" rows="3" placeholder="Descreva de forma clara e técnica o problema ocorrido..." required maxlength="400" oninput="App.atualizarContadorDescricao(this); App.verificarDuplicidadeAoDigitar();"></textarea>
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); margin-top: 4px;">
+                                    <span>Evite dados pessoais desnecessários.</span>
+                                    <span id="form-desc-counter">0 / 400</span>
+                                </div>
+                            </div>
+
+                            <!-- Campo 5: Prioridade -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <span>Grau de Prioridade</span>
+                                    <span class="required-mark">*</span>
+                                </label>
+                                <select id="form-prioridade" class="form-control" onchange="App.alterarPrioridadeForm(this.value)">
+                                    <option value="Baixa">Baixa — Reparos estéticos ou agendamentos comuns</option>
+                                    <option value="Média" selected>Média — Falhas parciais sem paralisação imediata</option>
+                                    <option value="Alta">Alta — Interrupção setorial ou impacto produtivo</option>
+                                    <option value="Urgente/Risco">Urgente/Risco — Risco iminente de acidente ou dano grave</option>
+                                </select>
+                            </div>
+
+                            <!-- Campo 6: Anexo de Imagem (Simulado) -->
+                            <div class="form-group">
+                                <label class="form-label">Anexo de Registro Visual (Simulado no MVP)</label>
+                                <div class="upload-dropzone" onclick="document.getElementById('form-file-hidden').click()">
+                                    <span class="material-symbols-outlined" style="font-size: 32px; color: var(--primary-container);">add_photo_alternate</span>
+                                    <p style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-top: 6px;">Clique para anexar evidência fotográfica</p>
+                                    <p style="font-size: 11px; color: var(--text-light);">JPEG, PNG ou WebP até 500 KB (Validação local estrita)</p>
+                                    <input type="file" id="form-file-hidden" style="display: none;" accept="image/jpeg,image/png,image/webp" onchange="App.handleUploadImagem(event)">
+                                </div>
+                                <div class="preview-image-box" id="form-image-preview-area">
+                                    <img id="form-image-preview" src="" alt="Pré-visualização">
+                                    <button type="button" class="btn btn-outline btn-sm" style="margin-top: 4px;" onclick="App.removerImagemAnexo()">Remover</button>
+                                </div>
+                            </div>
+
+                            <!-- Nota de Segurança e LGPD -->
+                            <div class="lgpd-notice">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary-container);">verified_user</span>
+                                <span><strong>Governança de Dados:</strong> O registro gera protocolo único (#EAM) com auditoria temporal imutável. Dados pessoais não são expostos em painéis de monitoramento públicos.</span>
+                            </div>
+
+                            <!-- Ações do Formulário -->
+                            <div class="form-actions-bar">
+                                <button type="button" class="btn btn-outline" onclick="App.navegarPara('dashboard')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" id="btn-submit-ticket">
+                                    <span class="material-symbols-outlined">send</span>
+                                    <span>Emitir Chamado</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 TELA 3: PAINÉIS OPERACIONAIS SETORIAIS (Cozinha, Guarita, Oficina)
+                 ============================================================ -->
+            <section class="view-section" id="view-paineis-operacionais">
+                <!-- Abas dos 3 Painéis Independentes -->
+                <div class="sector-header-tabs">
+                    <button class="sector-tab-btn active" data-sector="Cozinha" onclick="App.selecionarAbaSetorial('Cozinha')">
+                        <span class="material-symbols-outlined">restaurant</span>
+                        <span>Cozinha — Zeladoria</span>
+                    </button>
+                    <button class="sector-tab-btn" data-sector="Guarita" onclick="App.selecionarAbaSetorial('Guarita')">
+                        <span class="material-symbols-outlined">security</span>
+                        <span>Guarita — Vigilância</span>
+                    </button>
+                    <button class="sector-tab-btn" data-sector="Oficina" onclick="App.selecionarAbaSetorial('Oficina')">
+                        <span class="material-symbols-outlined">build</span>
+                        <span>Oficina — Manutenção</span>
+                    </button>
+                </div>
+
+                <!-- Barra de Status do Painel -->
+                <div class="sector-meta-bar">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-symbols-outlined" style="color: var(--primary-container);">tv</span>
+                        <strong id="sector-active-name-label">Painel: Cozinha — Zeladoria</strong>
+                        <span class="badge badge-aberto" id="sector-active-count-label">0 chamados</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-outline btn-sm" onclick="App.alternarModoTelao()">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">fullscreen</span>
+                            <span>Modo Telão</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid de Cards Operacionais -->
+                <div class="sector-cards-grid" id="sector-cards-container">
+                    <!-- Cards setoriais gerados dinamicamente via JS -->
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 TELA 4: TODOS OS CHAMADOS (PAINEL DO GESTOR)
+                 ============================================================ -->
+            <section class="view-section" id="view-todos-chamados">
+                <!-- Filtros e Busca Administrativa -->
+                <div class="table-filter-bar">
+                    <div class="filter-group">
+                        <select id="filtro-setor" class="form-control" style="width: auto;" onchange="App.aplicarFiltrosTabela()">
+                            <option value="TODOS">Todos os Setores</option>
+                            <option value="Cozinha">Cozinha (Zeladoria)</option>
+                            <option value="Guarita">Guarita (Vigilância)</option>
+                            <option value="Oficina">Oficina (Manutenção)</option>
+                        </select>
+
+                        <select id="filtro-status" class="form-control" style="width: auto;" onchange="App.aplicarFiltrosTabela()">
+                            <option value="TODOS">Todos os Status</option>
+                            <option value="Aberto">Aberto</option>
+                            <option value="Em Atendimento">Em Atendimento</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+
+                        <select id="filtro-prioridade" class="form-control" style="width: auto;" onchange="App.aplicarFiltrosTabela()">
+                            <option value="TODOS">Todas as Prioridades</option>
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Urgente/Risco">Urgente/Risco</option>
+                        </select>
+                    </div>
+
+                    <div class="search-input-wrapper">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="text" id="filtro-busca" class="form-control" placeholder="Buscar protocolo ou local..." oninput="App.aplicarFiltrosTabela()">
+                    </div>
+                </div>
+
+                <!-- Tabela Responsiva de Gestão -->
+                <div class="table-responsive-container">
+                    <table class="eam-table">
+                        <thead>
+                            <tr>
+                                <th>Protocolo</th>
+                                <th>Categoria</th>
+                                <th>Local</th>
+                                <th>Setor</th>
+                                <th>Prioridade</th>
+                                <th>Abertura</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table-tbody">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 TELA 5: INDICADORES GERENCIAIS (TMA, TMR, GRÁFICOS)
+                 ============================================================ -->
+            <section class="view-section" id="view-indicadores">
+                <div class="indicators-kpi-grid">
+                    <!-- TMA -->
+                    <div class="indicator-card tma">
+                        <div class="indicator-header">
+                            <span class="indicator-title">TMA — Tempo Médio de Atendimento</span>
+                            <span class="material-symbols-outlined" style="color: var(--primary-container);">schedule</span>
+                        </div>
+                        <div class="indicator-value" id="indicador-tma-valor">--</div>
+                        <div class="indicator-desc">Intervalo médio entre abertura e início de atendimento das equipes em campo.</div>
+                    </div>
+
+                    <!-- TMR -->
+                    <div class="indicator-card tmr">
+                        <div class="indicator-header">
+                            <span class="indicator-title">TMR — Tempo Médio de Resolução</span>
+                            <span class="material-symbols-outlined" style="color: var(--secondary);">task_alt</span>
+                        </div>
+                        <div class="indicator-value" id="indicador-tmr-valor">--</div>
+                        <div class="indicator-desc">Intervalo médio total desde a abertura até a conclusão definitiva do reparo.</div>
+                    </div>
+                </div>
+
+                <!-- Detalhamento dos Indicadores Reais -->
+                <div class="dashboard-grid-2">
+                    <div class="card-box">
+                        <div class="card-header-flex">
+                            <h3>Volume por Grau de Prioridade</h3>
+                        </div>
+                        <div class="sector-progress-list" id="indicadores-prioridade-list">
+                            <!-- Inserido dinamicamente via JS -->
+                        </div>
+                    </div>
+
+                    <div class="card-box">
+                        <div class="card-header-flex">
+                            <h3>Efetividade Operacional</h3>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700;">
+                                <span>Taxa de Resolução</span>
+                                <span id="indicador-taxa-resolucao">0%</span>
+                            </div>
+                            <div class="sector-progress-bar-bg" style="height: 12px;">
+                                <div class="sector-progress-bar-fill" id="indicador-taxa-bar" style="width: 0%; background-color: var(--success);"></div>
+                            </div>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+                                Cálculo real baseado na proporção entre chamados abertos e concluídos armazenados localmente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 TELA 6: HISTÓRICO DE AUDITORIA (LOGS IMUTÁVEIS)
+                 ============================================================ -->
+            <section class="view-section" id="view-auditoria">
+                <div class="card-box" style="margin-bottom: 24px;">
+                    <div class="card-header-flex">
+                        <div>
+                            <h3>Trilha de Auditoria & Conformidade LGPD</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                                Registro cronológico imutável de todas as transições de status, justificativas e operadores.
+                            </p>
+                        </div>
+                        <span class="badge badge-concluido">Log Cripto Imutável</span>
+                    </div>
+
+                    <div class="audit-timeline" id="audit-timeline-global">
+                        <!-- Inserido dinamicamente via JS -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- ====================================================================
+     MODAIS DO SISTEMA
+     ==================================================================== -->
+
+<!-- Modal 1: Alteração de Status com Justificativa Obrigatória -->
+<div class="modal-overlay" id="modal-alterar-status">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modal-status-protocol-title">Atualizar Status do Chamado</h3>
+            <button class="modal-close-btn" onclick="App.fecharModalStatus()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form onsubmit="App.salvarAlteracaoStatus(event)">
+            <div class="modal-body">
+                <input type="hidden" id="modal-ticket-id-hidden">
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-novo-status">
+                        <span>Novo Status</span>
+                        <span class="required-mark">*</span>
+                    </label>
+                    <select id="modal-novo-status" class="form-control" required>
+                        <option value="Aberto">Aberto</option>
+                        <option value="Em Atendimento">Em Atendimento</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-novo-setor">
+                        <span>Redirecionar Setor (Opcional)</span>
+                    </label>
+                    <select id="modal-novo-setor" class="form-control" onchange="App.atualizarOpcoesResponsavelModal(this.value)">
+                        <option value="">Manter setor atual</option>
+                        <option value="Cozinha">Cozinha (Zeladoria)</option>
+                        <option value="Guarita">Guarita (Vigilância)</option>
+                        <option value="Oficina">Oficina (Manutenção)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-responsavel">
+                        <span>Responsável Técnico / Operador</span>
+                        <span class="required-mark">*</span>
+                    </label>
+                    <select id="modal-responsavel" class="form-control" required>
+                        <option value="">Selecione o operador responsável...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-justificativa">
+                        <span>Justificativa Obrigatória da Alteração</span>
+                        <span class="required-mark">*</span>
+                    </label>
+                    <textarea id="modal-justificativa" class="form-control" rows="3" placeholder="Explique os motivos técnicos ou operacionais para esta alteração de status..." required maxlength="300"></textarea>
+                    <p style="font-size: 11px; color: var(--text-light); margin-top: 4px;">
+                        Toda mudança é registrada na trilha imutável de auditoria com carimbo de tempo.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="App.fecharModalStatus()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar Alteração</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 2: Detalhes Completos do Chamado -->
+<div class="modal-overlay" id="modal-detalhes-chamado">
+    <div class="modal-card" style="max-width: 680px;">
+        <div class="modal-header">
+            <div>
+                <h3 id="modal-detalhe-protocolo">#EAM-0000</h3>
+                <span id="modal-detalhe-categoria-setor" style="font-size: 12px; color: var(--text-muted);">Setor</span>
+            </div>
+            <button class="modal-close-btn" onclick="App.fecharModalDetalhes()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" id="modal-detalhes-conteudo">
+            <!-- Renderizado dinamicamente via JS de forma segura -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="App.fecharModalDetalhes()">Fechar</button>
+            <button type="button" class="btn btn-primary" id="modal-detalhes-btn-atualizar" onclick="App.abrirModalStatusDoDetalhe()">Atualizar Status</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Confirmação de Sucesso da Abertura -->
+<div class="modal-overlay" id="modal-sucesso-abertura">
+    <div class="modal-card" style="max-width: 440px; text-align: center;">
+        <div class="modal-body" style="padding: 32px 24px;">
+            <div style="width: 76px; height: 76px; border-radius: 50%; background-color: var(--surface-low); border: 2px solid var(--surface-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; overflow: hidden; padding: 6px;">
+                <img src="assets/logo.png" alt="Beega Bot Mascot" style="width: 100%; height: 100%; object-fit: contain;">
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 6px;">Chamado Aberto com Sucesso!</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">
+                Sua solicitação foi direcionada automaticamente para a equipe do setor responsável.
+            </p>
+            <div style="background-color: var(--surface-low); border-radius: var(--radius-md); padding: 12px; margin-bottom: 20px;">
+                <div style="font-size: 11px; text-transform: uppercase; color: var(--text-light); font-weight: 700;">Protocolo de Atendimento</div>
+                <div id="sucesso-protocolo-exibicao" style="font-size: 24px; font-weight: 800; color: var(--primary-container); font-family: monospace; margin-top: 4px;">#EAM-1045</div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" class="btn btn-outline" onclick="App.fecharModalSucesso()">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="App.verChamadoRecemCriado()">Ver Chamado</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 4: Confirmação de Reset de Mock -->
+<div class="modal-overlay" id="modal-reset-confirm">
+    <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+            <h3>Restaurar Dados de Demonstração</h3>
+            <button class="modal-close-btn" onclick="App.fecharModalReset()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 14px; color: var(--text-muted);">
+                Deseja restaurar os chamados padrão de demonstração da banca SENAI?
+                Todas as alterações locais serão redefinidas para o estado inicial de testes.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="App.fecharModalReset()">Cancelar</button>
+            <button type="button" class="btn btn-primary" style="background-color: var(--danger);" onclick="App.confirmarResetDados()">Restaurar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Container de Notificações Toast -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts Modularizados da Aplicação -->
+<script src="storage.js"></script>
+<script src="utils.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
