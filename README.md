@@ -1,235 +1,258 @@
 # EAM SENAI — Sistema de Gestão de Manutenção e Chamados Internos
 
-**Situação de Aprendizagem SENAI**  
-**Projeto:** MVP Funcional do EAM (*Enterprise Asset Management*) para Gestão de Chamados Internos  
-**Inspiração Visual:** BEEGA BOT (Design corporativo limpo, moderno, acessível e responsivo)
+**Projeto:** MVP de Sistema de Gestão de Manutenção e Chamados Internos  
+**Unidade Curricular:** Desenvolvimento de Soluções Web com Inteligência Artificial Generativa  
+**Categoria INTEGRA SENAI:** Soluções Industriais  
+**Inspiração visual:** BEEGA BOT
 
 ---
 
-## 1. Contexto e Objetivo
+## 1. Apresentação do Projeto
 
-Tradicionalmente, diversas organizações industriais e prediais realizam a comunicação de reparos, manutenções, tarefas de zeladoria e situações de risco por meio de canais informais, como grupos de WhatsApp ou bilhetes físicos.
+O EAM SENAI é um sistema web desenvolvido para centralizar o registro, o direcionamento e o acompanhamento de chamados internos relacionados à manutenção, zeladoria, vigilância e situações de risco.
 
-Essa prática acarreta problemas operacionais críticos:
-- Perda de informações, contexto e histórico dos incidentes;
-- Abertura de chamados duplicados para a mesma falha;
-- Falta de acompanhamento dos atendimentos e ausência de responsáveis individuais definidos;
-- Dificuldade para priorizar ocorrências de risco e emergências;
-- Ausência de indicadores quantitativos de desempenho (TMA, TMR, taxas de resolução).
+A proposta surgiu da necessidade de substituir o controle informal de ocorrências, realizado principalmente por mensagens instantâneas, por um ambiente organizado, com identificação dos chamados, direcionamento por setor e histórico das operações.
 
-O **EAM SENAI** centraliza essas operações em uma aplicação web estruturada, organizada e aderente às regras de governança, garantindo rastreabilidade dos registros e proteção à privacidade operacional (LGPD).
+O sistema busca reduzir a perda de informações, evitar duplicidades, facilitar a identificação de prioridades e fornecer indicadores para o acompanhamento das atividades.
 
----
+**Objetivo:** desenvolver um MVP funcional, acessível pelo navegador e com interface responsiva, para demonstrar o gerenciamento de chamados internos.
 
-## 2. Tecnologias e Arquitetura
+## 2. Requisitos do Sistema
 
-O projeto foi concebido estritamente com tecnologias web nativas, sem dependência de bibliotecas ou frameworks pesados (como React, Angular ou Vue):
+Os requisitos foram organizados conforme o planejamento técnico solicitado na Fase 1 da Situação de Aprendizagem.
 
-- **HTML5 Semântico:** Estruturação orientada a acessibilidade, marcos de navegação e componentes nativos.
-- **CSS3:** Estilização com variáveis customizadas, Flexbox, CSS Grid, tipografia legível (*Plus Jakarta Sans*) e adaptação para desktop, tablets e monitores de parede (*Modo Telão/Kiosk*).
-- **JavaScript Puro (Vanilla JS):** Arquitetura modular separando manipulação de DOM, regras de negócio e camada de dados.
-- **Camada de Persistência Desacoplada (`storage.js`):** Abstração das operações de leitura e escrita em `LocalStorage`, concebida para permitir substituição futura por um banco relacional (SQLite ou API REST) sem refatoração da camada de visualização.
+### 2.1. Requisitos Funcionais (RF)
 
-### Estrutura de Arquivos
-```
+| Código | Requisito | Descrição | Situação |
+|---|---|---|---|
+| RF01 | Abertura de chamados | Permitir o registro simplificado de ocorrências, com geração automática de protocolo único. | Implementado e testado |
+| RF02 | Direcionamento por categoria | Encaminhar automaticamente os chamados ao setor correspondente à categoria selecionada. | Implementado e testado |
+| RF03 | Painéis setoriais | Disponibilizar painéis operacionais para Cozinha, Guarita e Oficina, exibindo os chamados de cada setor. | Implementado e testado |
+| RF04 | Painel administrativo | Permitir a visualização e o gerenciamento centralizado dos chamados, com filtros e ações administrativas. | Implementado e testado |
+| RF05 | Histórico de auditoria | Registrar as alterações de status com identificação do responsável, data, horário e justificativa. | Implementado e testado |
+| RF06 | Alertas de prioridade | Destacar visualmente chamados prioritários, especialmente ocorrências classificadas como risco. | Implementado; validação específica não registrada na matriz de testes |
+
+### 2.2. Requisitos Não Funcionais (RNF)
+
+| Código | Requisito | Descrição | Situação |
+|---|---|---|---|
+| RNF01 | Privacidade dos dados | Os painéis operacionais não devem exibir dados pessoais desnecessários dos solicitantes, respeitando os princípios de privacidade da LGPD. | Implementado; testes específicos de privacidade devem ser considerados na validação |
+| RNF02 | Compatibilidade e responsividade | O sistema deve funcionar em navegadores web, adaptando sua interface a computadores, tablets e monitores, sem exigir aplicativo nativo. | Implementado; testes em diferentes dispositivos e navegadores ainda são necessários |
+| RNF03 | Atualização automática | Os painéis operacionais devem atualizar suas informações visualmente sem exigir o recarregamento manual da página. | Implementado e testado; atualização local a cada 5 segundos |
+
+**Observação:** os requisitos representam o escopo planejado. A situação de implementação indica o que está disponível no MVP, sem confundir funcionalidades implementadas com validações ainda pendentes.
+
+## 3. Regras de Negócio
+
+O funcionamento do sistema segue as seguintes regras:
+
+1. **Protocolo único:** todo chamado cadastrado recebe um identificador sequencial, como `#EAM-1046`.
+2. **Direcionamento automático:** a categoria determina o setor inicial:
+   - Manutenção → Oficina;
+   - Zeladoria → Cozinha;
+   - Vigilância → Guarita;
+   - Risco → Guarita, com prioridade visual máxima.
+3. **Status obrigatório:** todo chamado possui um status identificável: Aberto, Em Atendimento, Concluído ou Cancelado.
+4. **Responsabilidade setorial:** todo chamado recebe inicialmente um setor responsável. A atribuição de um responsável individual ocorre no início do atendimento.
+5. **Justificativa obrigatória:** alterações de status e redirecionamentos exigem justificativa e identificação do operador.
+6. **Histórico preservado:** as operações anteriores são mantidas no histórico da aplicação, sem edição ou exclusão pela interface.
+7. **Alerta de duplicidade:** possíveis ocorrências repetidas são identificadas por comparação do local e de palavras relevantes na descrição. O alerta não impede o cadastro.
+8. **Priorização de riscos:** ocorrências classificadas como risco recebem destaque visual para facilitar sua identificação.
+
+## 4. Funcionalidades Complementares
+
+Além dos seis requisitos funcionais prioritários, o MVP possui recursos complementares:
+
+- Identificação de possíveis chamados duplicados.
+- Filtros administrativos por setor, status e prioridade.
+- Pesquisa por protocolo e local.
+- Atribuição de responsável individual pelo atendimento.
+- Redirecionamento de chamados entre setores, com justificativa.
+- Anexos de imagem com pré-visualização.
+- Indicadores gerenciais de atendimento e resolução.
+- Modo Telão/Kiosk para visualização operacional.
+
+## 5. Indicadores Gerenciais
+
+O dashboard apresenta indicadores calculados a partir dos registros armazenados no sistema.
+
+**TMA — Tempo Médio de Atendimento**
+
+Calcula o tempo médio entre a abertura do chamado e o início do atendimento.
+
+\[
+TMA = \frac{\sum (dataInicioAtendimento-dataAbertura)}{N_{atendidos}}
+\]
+
+**TMR — Tempo Médio de Resolução**
+
+Calcula o tempo médio entre a abertura e a conclusão dos chamados.
+
+\[
+TMR = \frac{\sum (dataConclusao-dataAbertura)}{N_{concluidos}}
+\]
+
+**Taxa de Conclusão**
+
+Representa o percentual de chamados concluídos em relação ao total de chamados.
+
+\[
+Taxa = \frac{Chamados\ Concluídos}{Total\ de\ Chamados}\times100
+\]
+
+**Distribuição operacional:** apresenta a quantidade de chamados por setor e por nível de prioridade.
+
+Chamados que ainda não possuem os registros necessários para determinado cálculo não são considerados na respectiva média. Quando não existem dados suficientes, o sistema deve informar essa condição.
+
+## 6. Modelo de Dados
+
+### 6.1. Modelo relacional proposto — SQLite
+
+Como solicitado na Fase 1, o planejamento prevê um modelo relacional com três tabelas principais:
+
+**Tabela `setores`**
+
+| Campo | Tipo SQLite | Descrição |
+|---|---|---|
+| id | INTEGER PRIMARY KEY | Identificador do setor |
+| nome | TEXT NOT NULL | Nome do setor |
+
+**Tabela `chamados`**
+
+| Campo | Tipo SQLite | Descrição |
+|---|---|---|
+| id | INTEGER PRIMARY KEY | Identificador interno |
+| protocolo | TEXT UNIQUE NOT NULL | Protocolo do chamado |
+| solicitante | TEXT NOT NULL | Nome ou identificação do solicitante |
+| categoria | TEXT NOT NULL | Categoria da ocorrência |
+| setor_id | INTEGER NOT NULL | Setor responsável |
+| local | TEXT NOT NULL | Local da ocorrência |
+| descricao | TEXT NOT NULL | Descrição do problema |
+| prioridade | TEXT NOT NULL | Prioridade do chamado |
+| status | TEXT NOT NULL | Situação atual |
+| responsavel | TEXT | Responsável individual pelo atendimento |
+| imagem | TEXT | Referência ou conteúdo do anexo |
+| data_abertura | TEXT NOT NULL | Data e horário de abertura |
+| data_inicio_atendimento | TEXT | Data e horário do início do atendimento |
+| data_conclusao | TEXT | Data e horário da conclusão |
+
+**Tabela `logs_auditoria`**
+
+| Campo | Tipo SQLite | Descrição |
+|---|---|---|
+| id | INTEGER PRIMARY KEY | Identificador do evento |
+| chamado_id | INTEGER NOT NULL | Chamado relacionado ao evento |
+| status_anterior | TEXT | Status anterior à alteração |
+| novo_status | TEXT NOT NULL | Novo status |
+| setor_id | INTEGER | Setor relacionado à operação |
+| responsavel | TEXT NOT NULL | Operador responsável pela ação |
+| data_hora | TEXT NOT NULL | Data e horário do evento |
+| justificativa | TEXT NOT NULL | Motivo da alteração |
+
+**Relacionamentos:**
+
+- Um setor pode possuir vários chamados.
+- Um chamado pertence a um setor responsável.
+- Um chamado pode possuir vários registros de auditoria.
+- Cada registro de auditoria está relacionado a um chamado.
+
+### 6.2. Modelo utilizado no MVP
+
+Apesar do planejamento relacional em SQLite, a versão atual do protótipo utiliza **LocalStorage** para armazenar os chamados e seus históricos no navegador.
+
+Os registros são organizados em estruturas JSON, com entidades equivalentes a `Ticket` e `EventoAuditoria`.
+
+Portanto, o modelo SQLite apresentado nesta documentação representa o planejamento técnico da solução e não uma integração já implementada.
+
+## 7. Tecnologias e Arquitetura
+
+O MVP foi desenvolvido utilizando tecnologias web nativas:
+
+- **HTML5:** estruturação semântica das páginas.
+- **CSS3:** identidade visual, responsividade e organização dos componentes.
+- **JavaScript (Vanilla JS):** regras de negócio, manipulação da interface e gerenciamento dos chamados.
+- **LocalStorage:** persistência local dos dados no navegador.
+
+### 7.1. Estrutura de Arquivos
+
+```text
 BEEGABOT/
-├── index.html        # Estrutura semântica e interface única com 6 visões e modais
-├── style.css         # Identidade visual corporativa, responsividade e modo telão
-├── storage.js        # Camada de persistência, modelo de dados e mock inicial
-├── utils.js          # Funções utilitárias, cálculos de TMA/TMR, duplicidades e sanitização
-├── app.js            # Orquestração da interface, fluxo de eventos, filtros e navegação
+├── index.html
+├── style.css
+├── storage.js
+├── utils.js
+├── app.js
 ├── assets/
-│   └── logo.png      # Identidade visual oficial (BEEGA BOT)
-└── README.md         # Documentação técnica e operacional do projeto
+│   └── logo.png
+└── README.md
 ```
 
----
+- `index.html`: estrutura das telas e componentes.
+- `style.css`: estilos e adaptações da interface.
+- `storage.js`: armazenamento e gerenciamento dos dados.
+- `utils.js`: funções auxiliares, cálculos e validações.
+- `app.js`: controle da interface e execução das funcionalidades.
+- `assets/`: recursos visuais utilizados pelo projeto.
 
-## 3. Como Executar
+## 8. Como Executar
 
-### Forma Preferencial: Execução via Servidor Local (Live Server)
-Recomenda-se executar o projeto por meio de um servidor HTTP local para assegurar a correta resolução de caminhos de arquivos e evitar políticas restritivas do protocolo `file://`:
+Recomenda-se utilizar o Visual Studio Code com a extensão Live Server.
 
-1. No **VS Code**, clique com o botão direito sobre `index.html` e selecione **Open with Live Server**;
-2. Ou via terminal com Python:
-   ```bash
-   python -m http.server 8000
-   ```
-   E acesse no navegador: `http://localhost:8000`
+1. Abra a pasta do projeto no VS Code.
+2. Localize o arquivo `index.html`.
+3. Clique com o botão direito e selecione **Open with Live Server**.
+4. O sistema será aberto no navegador.
 
-### Execução Direta:
-- É possível abrir o arquivo `index.html` diretamente em qualquer navegador moderno com suporte a LocalStorage e JavaScript ES6.
+Como alternativa, execute no terminal, dentro da pasta do projeto:
 
----
+```bash
+python -m http.server 8000
+```
 
-## 4. Status de Implementação das Funcionalidades
+Depois, acesse:
 
-Para garantir clareza perante a banca avaliadora, a tabela a seguir diferencia o que foi planejado, o que está implementado no código e o que foi efetivamente testado:
+`http://localhost:8000`
 
-| Funcionalidade | Status | Detalhes da Implementação / Validação |
-|---|---|---|
-| **Abertura de Chamados** | Implementado & Testado | Validação de campos obrigatórios, protocolo sequencial `#EAM-10XX` e carimbo de data/hora. |
-| **Mapeamento Categoria ➔ Setor** | Implementado & Testado | Direcionamento automático para Cozinha, Guarita ou Oficina no momento da seleção. |
-| **Detecção de Duplicidades** | Implementado & Testado | Algoritmo por *stopwords* e comparação de termos relevantes no mesmo local; alerta não-bloqueante funcional. |
-| **Painéis Setoriais Independentes** | Implementado & Testado | 3 visões independentes (Cozinha, Guarita, Oficina) ordenadas por criticidade e data. |
-| **Atualização Automática (5s)** | Implementado & Testado | `setInterval` a cada 5s atualizando o DOM sem recarregar a página. |
-| **Tabela Central do Gestor** | Implementado & Testado | Filtros combinados (setor, status, prioridade) e busca textual por protocolo/local. |
-| **Alteração de Status com Justificativa** | Implementado & Testado | Exigência obrigatória de justificativa e identificação do operador responsável. |
-| **Cálculo de TMA e TMR** | Implementado & Testado | Médias aritméticas calculadas estritamente com os registros válidos do banco local. |
-| **Taxa de Conclusão** | Implementado & Testado | Percentual dinâmico calculado com base no total de chamados concluídos vs. total geral. |
-| **Modo Telão / Kiosk** | Implementado | Oculta barra lateral e expande tipografia; validação visual em monitores físicos de parede está pendente. |
-| **Upload de Imagem (Base64)** | Implementado | Pré-visualização e armazenamento em string DataURL; validação de limite rígido de cota pendente. |
-| **Redirecionamento de Setor** | Implementado & Testado | Permite trocar o setor responsável registrando evento com justificativa na auditoria. |
-| **Reabertura de Chamados Concluídos** | Planejado | Regra documentada na arquitetura, mas a interface atual bloqueia reabertura após conclusão. |
-| **Autenticação RBAC e Sessões** | Planejado | Fora do escopo do MVP; operadores são informados manualmente nas transições. |
+## 9. Testes e Validação
 
----
+Os testes realizados no ambiente de desenvolvimento incluem:
 
-## 5. Regras de Negócio Obrigatórias
+| Cenário | Resultado |
+|---|---|
+| Cadastro de chamado com dados válidos | Aprovado |
+| Validação de campos obrigatórios | Aprovado |
+| Geração de protocolo único | Aprovado |
+| Direcionamento automático por categoria | Aprovado |
+| Identificação de possíveis duplicidades | Aprovado |
+| Alteração de status sem justificativa | Aprovado: operação bloqueada |
+| Registro do início do atendimento | Aprovado |
+| Registro da conclusão e cálculo do TMR | Aprovado |
+| Sanitização de entradas contra XSS | Aprovado |
+| Restauração dos dados de demonstração | Aprovado |
+| Atualização automática dos painéis | Aprovado |
 
-1. **Protocolo Único e Rastreável:** Todo chamado recebe um identificador alfanumérico sequencial exclusivo (ex.: `#EAM-1040`).
-2. **Setor Inicial Automático:** A categoria selecionada determina compulsoriamente o setor de destino inicial:
-   - *Manutenção* ➔ Oficina
-   - *Zeladoria* ➔ Cozinha
-   - *Vigilância* ➔ Guarita
-   - *Risco* ➔ Guarita, com alerta visual prioritário máximo (regra inicial de protótipo sujeita à validação da empresa parceira).
-3. **Não-Bloqueio por Duplicidade:** O alerta de duplicidade orienta o usuário sobre ordens já existentes no mesmo local, mas não impede a conclusão do cadastro caso o problema seja distinto.
-4. **Justificativa Obrigatória em Transições:** Nenhuma alteração de status ou cancelamento pode ser consumada sem o preenchimento de justificativa textual e identificação do responsável.
-5. **Preservação de Histórico de Auditoria:** Registros de eventos anteriores são estritamente *append-only* na lógica da aplicação; não é permitido editar ou expurgar eventos passados.
-6. **Carimbos de Tempo Canônicos:**
-   - `dataAbertura`: gravada na criação do chamado.
-   - `dataInicioAtendimento`: gravada na primeira transição para `Em Atendimento` e preservada.
-   - `dataConclusao`: gravada na primeira transição para `Concluído`.
-7. **Privacidade Operacional (LGPD):** Os painéis operacionais públicos exibem apenas dados técnicos da ocorrência (local, ativo, descrição e equipe), ocultando dados pessoais desnecessários de solicitantes.
+### 9.1. Validações Pendentes
 
----
+- Teste de estouro da cota de armazenamento do LocalStorage.
+- Testes em outros navegadores e dispositivos, incluindo Safari e iOS.
+- Testes de acessibilidade com leitores de tela.
+- Validação visual do modo Telão em monitores físicos.
 
-## 6. Estrutura de Dados
+## 10. Limitações Conhecidas
 
-O modelo de dados opera com entidades desacopladas serializadas em JSON no LocalStorage:
+O projeto é um MVP de demonstração e possui as seguintes limitações:
 
-### 6.1. Entidade Chamado (`Ticket`)
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | `string` | Identificador interno sem formatação (ex.: `"EAM-1046"`). |
-| `protocolo` | `string` | Identificador canônico formatado (ex.: `"#EAM-1046"`). |
-| `solicitante` | `string` | Nome ou função do operador que registrou a ocorrência. |
-| `categoria` | `string` | `"Manutenção"` \| `"Zeladoria"` \| `"Vigilância"` \| `"Risco"`. |
-| `setor` | `string` | Setor responsável atual (`"Cozinha"` \| `"Guarita"` \| `"Oficina"`). |
-| `local` | `string` | Localização física, sala ou máquina (ex.: `"Oficina — Torno CNC 01"`). |
-| `descricao` | `string` | Detalhamento do problema técnico relatado. |
-| `prioridade` | `string` | `"Baixa"` \| `"Média"` \| `"Alta"` \| `"Urgente/Risco"`. |
-| `status` | `string` | `"Aberto"` \| `"Em Atendimento"` \| `"Concluído"` \| `"Cancelado"`. |
-| `imagemUrl` | `string` | String em formato Base64 (DataURL) da imagem anexada (ou vazia). |
-| `dataAbertura` | `string (ISO)` | Carimbo de data/hora de abertura da ocorrência. |
-| `dataInicioAtendimento` | `string (ISO) \| null` | Carimbo do primeiro atendimento; `null` enquanto aberto. |
-| `dataConclusao` | `string (ISO) \| null` | Carimbo de conclusão definitiva; `null` se não finalizado. |
-| `responsavelAtual` | `string` | Nome individual ou equipe técnica designada para a execução. |
-| `historico` | `Array<EventoAuditoria>` | Lista sequencial dos eventos de ciclo de vida do chamado. |
+1. **Armazenamento local:** os dados ficam salvos no navegador utilizado e não são sincronizados entre computadores ou usuários.
+2. **Ausência de autenticação real:** não existem login, controle de sessão ou perfis de acesso com permissões individuais.
+3. **Identificação manual:** o nome do operador informado nas operações não representa uma identidade autenticada.
+4. **Banco de dados:** a integração com SQLite está prevista no planejamento, mas não faz parte da implementação atual.
+5. **Anexos:** as imagens são armazenadas localmente em formato DataURL, e o comportamento diante do esgotamento da cota ainda não foi validado.
+6. **Auditoria:** a interface preserva os eventos registrados, mas o LocalStorage não garante imutabilidade real dos dados.
+7. **Emergências:** o sistema não substitui os canais oficiais de emergência e socorro.
+8. **Integrações:** o MVP não possui integração com WhatsApp ou sistemas externos.
 
-### 6.2. Entidade Registro de Auditoria (`EventoAuditoria`)
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `statusAnterior` | `string \| null` | Estado do chamado antes da transição (`null` na criação). |
-| `novoStatus` | `string` | Estado do chamado após a validação da transição. |
-| `setor` | `string` | Setor em que o chamado se encontrava no momento da ação. |
-| `responsavel` | `string` | Nome do operador ou gestor que executou a transição. |
-| `dataHora` | `string (ISO)` | Carimbo temporal exato da operação. |
-| `justificativa` | `string` | Justificativa técnica e contextual obrigatória da mudança. |
+A solução também não contempla módulos financeiros ou gerenciamento complexo de ativos, mantendo o foco no controle de chamados internos.
 
 ---
 
-## 7. Atribuição de Responsáveis: Setor vs. Responsável Individual
-
-Para sanar a falta de acompanhamento apontada no problema de negócio, o sistema diferencia formalmente dois conceitos:
-
-1. **Setor Responsável:** A área física ou departamento corporativo encarregado da gerência do chamado (*Cozinha/Zeladoria*, *Guarita/Vigilância* ou *Oficina/Manutenção*). O setor é definido inicialmente pela categoria e pode ser modificado por redirecionamento.
-2. **Responsável Individual pelo Atendimento:** O profissional, técnico ou líder operacional especificamente atribuído para a execução física do serviço (ex.: `"Técnico Silva - Matrícula N2-772"` ou `"Equipe Hidráulica N2"`). A atribuição individual é exigida no início do atendimento e registrada em cada passo da trilha de auditoria.
-
----
-
-## 8. Governança e Regras de Auditoria
-
-A rastreabilidade dos chamados obedece a um fluxo sequencial auditado para cada etapa do ciclo de vida:
-
-- **Abertura:** O sistema registra o chamado com status inicial `Aberto`, gravando solicitante, categoria, setor mapeado e a justificativa de abertura.
-- **Início do Atendimento:** A mudança para `Em Atendimento` exige a indicação do responsável individual pelo atendimento e justificativa técnica, fixando a `dataInicioAtendimento` (utilizada no cálculo de TMA).
-- **Redirecionamento:** O gestor pode alterar o setor responsável caso constate desvio de escopo (ex.: vazamento hidráulico que afeta o quadro elétrico), exigindo justificativa e registrando novo setor na trilha.
-- **Conclusão:** A transição para `Concluído` exige parecer de liberação do serviço e fixa a `dataConclusao` (utilizada no cálculo de TMR).
-- **Cancelamento:** Chamados abertos indevidamente ou cancelados pelo solicitante exigem justificativa mandatória; não é permitida a exclusão do registro, mantendo a integridade histórica.
-- **Eventual Reabertura (Regra de Negócio Documentada):** Caso o problema reincida após a conclusão, o sistema deve registrar a reabertura como um novo evento na trilha de auditoria, sem sobrescrever os timestamps históricos de abertura e primeira conclusão, viabilizando métricas de reincidência.
-
-> [!WARNING]
-> **Esclarecimento sobre a Imutabilidade no MVP:**  
-> A lógica da aplicação impede a edição ou deleção do histórico através dos formulários e botões da interface de usuário (*read-only* para o operador comum). Contudo, **o armazenamento em LocalStorage não oferece imutabilidade criptográfica real**, visto que os dados residem desprotegidos no navegador do cliente e podem ser inspecionados ou adulterados via DevTools (F12). Em ambiente corporativo final, essa garantia deve ser fornecida por um banco de dados relacional com controle de transações no servidor.
-
----
-
-## 9. Indicadores Gerenciais — TMA, TMR e Desempenho Operacional
-
-Os indicadores refletem estritamente as operações registradas no armazenamento local, sem preenchimento por valores aleatórios fictícios:
-
-1. **TMA (Tempo Médio de Atendimento):**
-   $$\text{TMA} = \frac{\sum (\text{dataInicioAtendimento} - \text{dataAbertura})}{N_{\text{atendidos}}}$$
-   *Chamados ainda não iniciados não entram no cômputo.*
-
-2. **TMR (Tempo Médio de Resolução):**
-   $$\text{TMR} = \frac{\sum (\text{dataConclusao} - \text{dataAbertura})}{N_{\text{concluidos}}}$$
-   *Chamados não finalizados não entram no cômputo.*
-
-3. **Taxa de Conclusão Operacional:**
-   $$\text{Taxa de Conclusão} = \left( \frac{\text{Chamados Concluídos}}{\text{Total de Chamados}} \right) \times 100$$
-
-4. **Distribuição Setorial e por Criticidade:**
-   - Contabilização por setor (Cozinha, Guarita, Oficina);
-   - Proporção por prioridade (Baixa, Média, Alta, Urgente/Risco).
-
-*Caso não existam registros concluídos ou iniciados suficientes, a interface exibe explicitamente a mensagem "Sem dados suficientes", em vez de apresentar números simulados.*
-
----
-
-## 10. Anexos de Imagem em Base64: Validações e Limitações
-
-No protótipo atual, os anexos são convertidos em string DataURL (Base64) por meio da `FileReader API` no navegador.
-
-### Impactos Técnicos e Limitações Conhecidas:
-- **Sobrecarga de Armazenamento:** A codificação Base64 gera um aumento aproximado de 33% no tamanho do arquivo em comparação com o binário original.
-- **Cota do LocalStorage:** O limite médio de armazenamento dos navegadores para LocalStorage varia entre 5MB e 10MB por domínio. Duas imagens em alta resolução podem esgotar completamente a cota do sistema, gerando exceções do tipo `QuotaExceededError`.
-- **Recomendações e Validações Necessárias:**
-  - Validação estrita de tipos MIME no front-end (`image/jpeg`, `image/png`);
-  - Limite recomendado para o protótipo: arquivos de no máximo **500 KB**;
-  - Para a versão final em produção, o upload deve ser transmitido via `multipart/form-data` para um servidor de armazenamento de objetos (ou gravado em disco), persistindo apenas o caminho/URI no banco de dados.
-
----
-
-## 11. Limitações Conhecidas do MVP
-
-Para alinhamento rigoroso com as expectativas da banca de avaliação:
-
-1. **Persistência Estritamente Local:** O `LocalStorage` não sincroniza dados entre diferentes navegadores, usuários ou máquinas. Um chamado aberto no computador A não estará visível no computador B.
-2. **Volatilidade do Cliente:** A limpeza de cache, cookies ou navegação anônima restaura ou expurga os dados cadastrados.
-3. **Ausência de Autenticação Real:** O sistema não possui controle de sessão (login/senha) nem perfis de acesso criptografados (RBAC).
-4. **Sem Integração com WhatsApp ou Telefonia:** A ferramenta foi desenvolvida para substituir esses canais informais, não para integrá-los.
-5. **Canais Oficiais de Emergência:** O sistema **não substitui** o acionamento direto dos órgãos de emergência e socorro (Bombeiros 193, SAMU 192 e Brigada de Emergência Interna).
-
----
-
-## 12. Matriz de Testes Realizados
-
-Os testes a seguir foram verificados diretamente no ambiente de execução do projeto:
-
-| Cenário de Teste | Status | Resultado Observado |
-|---|---|---|
-| Cadastro de novo chamado com campos válidos | **Aprovado** | Registro persistido, protocolo `#EAM-1046` gerado e refletido nas visões. |
-| Validação de campos obrigatórios no formulário | **Aprovado** | O navegador bloqueia o envio caso solicitante, local ou descrição estejam em branco. |
-| Mapeamento automático de setor por categoria | **Aprovado** | Manutenção ➔ Oficina, Zeladoria ➔ Cozinha, Vigilância ➔ Guarita, Risco ➔ Guarita. |
-| Detecção de duplicidade por palavras-chave | **Aprovado** | Alerta exibido com chips clicáveis ao coincidir local e ao menos 2 palavras relevantes. |
-| Transição de status sem justificativa | **Aprovado** | Formulário bloqueia o envio e exige preenchimento do campo de justificativa. |
-| Registro de `dataInicioAtendimento` na 1ª transição | **Aprovado** | Timestamp gravado no primeiro atendimento e preservado nas transições subsequentes. |
-| Registro de `dataConclusao` ao concluir | **Aprovado** | Timestamp registrado e utilizado no cálculo exato do TMR. |
-| Sanitização de strings contra ataques XSS | **Aprovado** | Tags `<script>` e caracteres especiais são devidamente escapados antes da renderização. |
-| Restauração dos dados mock de demonstração | **Aprovado** | Modal de confirmação restaura os 6 chamados originais e reseta o contador sequencial. |
-| Atualização dinâmica a cada 5 segundos | **Aprovado** | `setInterval` atualiza cards e contadores sem acionar o reload da página. |
-| Teste de estouro de cota (LocalStorage Quota) | **Pendente** | Validação de comportamento sob inclusão de múltiplas imagens grandes em lote ainda não executada. |
-| Teste em múltiplos navegadores legados | **Pendente** | Execução validada em navegadores baseados em Chromium; testes em Safari/iOS pendentes. |
-| Teste de acessibilidade WCAG (Leitores de tela) | **Pendente** | Navegação por teclado básica funcional; teste com NVDA/TalkBack pendente. |
+**EAM SENAI — Centralização de chamados, organização operacional e rastreabilidade.**
