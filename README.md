@@ -3,7 +3,7 @@
 **Projeto:** MVP de Sistema de Gestão de Manutenção e Chamados Internos  
 **Unidade Curricular:** Desenvolvimento de Soluções Web com Inteligência Artificial Generativa  
 **Categoria INTEGRA SENAI:** Soluções Industriais  
-**Inspiração visual:** BEEGA BOT
+**Inspiração visual:** BEEGA BOT 
 **Integrantes:** Ana Sofhia, Bárbara, Emily, Evelyn e Gabriela
 
 ---
